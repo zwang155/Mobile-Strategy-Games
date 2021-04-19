@@ -8,7 +8,7 @@ function main() {
 
     let parseTime = d3.timeParse('%d/%m/%Y')
 
-    let x = d3.scaleLinear().range([0, width - margin.right]),
+    let x = d3.scaleLinear().range([0, width]),
         y = d3.scaleLinear().range([height, 0]),
         z = d3.scaleOrdinal(d3.schemeCategory10)
 
@@ -66,6 +66,8 @@ function main() {
         data.forEach(function (elem) {
             elem.values.forEach(d => d.average = d.count > 0 ? d.total / d.count : 0)
         })
+        data.sort((a, b) =>
+            b.values.find(d => d.year === end).average - a.values.find(d => d.year === end).average)
         console.log(data)
 
         x.domain([start, end])
@@ -98,7 +100,7 @@ function main() {
             .data(data)
             .enter().append('svg')
             .attr('class', 'city')
-            .attr('width', width - margin.right)
+            .attr('width', width)
 
 
         function hover(elem) {
@@ -132,7 +134,7 @@ function main() {
 
         const xAxis = (g, x) => g
             .attr('transform', `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+            .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0).tickFormat(d3.format('d')))
 
         function zoomed(event) {
             let xz = event.transform.rescaleX(x)
@@ -144,8 +146,8 @@ function main() {
 
         const zoom = d3.zoom()
             .scaleExtent([1, 5])
-            .extent([[margin.left, 0], [width - margin.right, height]])
-            .translateExtent([[margin.left, -Infinity], [width - margin.right, Infinity]])
+            .extent([[margin.left, 0], [width, height]])
+            .translateExtent([[margin.left, -Infinity], [width, Infinity]])
             .on('zoom', zoomed)
 
         svg.call(zoom)
@@ -167,29 +169,38 @@ function main() {
             })
             .on('mouseout', exit)
 
-        svg.selectAll('.label')
-            .data(data)
-            .enter()
-            .append('text')
-            .datum(function (d) {
-                return {id: d.id, value: d.values[d.values.length - 1]}
-            })
-            .attr('class', 'label')
-            .attr('transform', function (d) {
-                return 'translate(' + x(d.value.year) + ',' + y(d.value.average) + ')'
-            })
-            .attr('x', 55)
-            .attr('y', 15)
-            .attr('dy', '0.35em')
-            .attr('id', d => d.id)
-            .attr('data-id', d => d.id.substring(0, 3).toUpperCase())
-            .style('font', '10px sans-serif')
-            .text(function (d) {
-                return d.id
-            })
-            .on('click', click)
-            .on('mouseover', hover)
-            .on('mouseout', exit)
+        // svg.selectAll('.label')
+        //     .data(data)
+        //     .enter()
+        //     .append('text')
+        //     .datum(function (d) {
+        //         return {id: d.id, value: d.values[d.values.length - 1]}
+        //     })
+        //     .attr('class', 'label')
+        //     .attr('transform', function (d) {
+        //         return 'translate(' + x(d.value.year) + ',' + y(d.value.average) + ')'
+        //     })
+        //     .attr('x', 55)
+        //     .attr('y', 15)
+        //     .attr('dy', '0.35em')
+        //     .attr('id', d => d.id)
+        //     .attr('data-id', d => d.id.substring(0, 3).toUpperCase())
+        //     .style('font', '10px sans-serif')
+        //     .text(function (d) {
+        //         return d.id
+        //     })
+        //     .on('click', click)
+        //     .on('mouseover', hover)
+        //     .on('mouseout', exit)
+
+        let legend = d3.legendColor()
+            .title('Color Legend')
+            .scale(z)
+
+        svg.append('g')
+            .attr('class', 'legend')
+            .attr('transform', 'translate(' + (width + margin.left + margin.right/5) + ',' + ((height - margin.bottom) / 2) + ')')
+            .call(legend)
     })
 }
 
