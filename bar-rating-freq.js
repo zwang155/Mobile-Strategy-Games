@@ -19,10 +19,12 @@ function main() {
         }
     }).then(dataset => {
         let data = {}
+        let total = 0
         xLabels.forEach(elem => data[elem] = 0)
         dataset.forEach(elem => {
             if (elem.rating > 0) {
                 data[elem.rating]++
+                total++
             }
         })
         console.log(data)
@@ -30,7 +32,11 @@ function main() {
         function hover(event, d) {
             d3.select(this).transition().duration(300).style('stroke', 'steelblue')
             tooltip.transition().duration(200).style('opacity', 0.9)
-            tooltip.html('Average User Rating: ' + d + '<br>Frequency: ' + data[d])
+            tooltip.html(
+                'Average User Rating: ' + d
+                + '<br>Frequency: ' + data[d]
+                + '<br>Proportion: ' + ~~(data[d] * 100 / total) + '%'
+            )
                 .style('left', (event.pageX + 20) + 'px')
                 .style('top', (event.pageY + 5) + 'px')
         }
