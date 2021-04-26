@@ -2,7 +2,7 @@
 <html style="background: aliceblue">
 <style>
 	svg {
-		background: #eeeeee;
+		background: #f0f0f0;
 	}
 
 	.axis text,
@@ -19,6 +19,15 @@
 		fill: none;
 		stroke: steelblue;
 		stroke-width: 1.5px;
+	}
+
+	.tooltip {
+		position: absolute;
+		text-align: center;
+		padding: 5px;
+		font: 12px sans-serif;
+		background: lightsteelblue;
+		border-radius: 6px;
 	}
 </style>
 <head>
@@ -51,19 +60,29 @@
 	<h1><a href="project%20proposal.pdf">Project Proposal</a></h1>
 	<h1><a href="alpha%20release.pdf">Alpha Release</a> </h1>
 	<div>
-		<h2>average user rating distribution</h2>
+		<h2>Distribution of Average User Rating</h2>
 		<svg id="bar-rating-freq" width="960" height="485"></svg>
 		<script src="bar-rating-freq.js"></script>
 	</div>
 	<div>
-		<h2>average user rating VS user rating count</h2>
+		<h2>Rating VS Rating Count</h2>
 		<svg id="strip-rating-count" width="960" height="485"></svg>
 		<script src="strip-rating-count.js"></script>
 	</div>
 	<div>
-		<h2>The change of size for various genres</h2>
+		<h2>Rating VS Count, Price, Size, Name Length</h2>
+		<svg id="box-rating" width="960" height="485"></svg>
+		<script src="box-rating.js"></script>
+	</div>
+	<div>
+		<h2>Size Change for Different Genres</h2>
 		<svg id="line-year-size-genre" width="960" height="485"></svg>
 		<script src="line-year-size-genre.js"></script>
+	</div>
+	<div>
+		<h2>Chosen Game Details</h2>
+		<svg id="multi-scale" width="960" height="485"></svg>
+		<script src="multi-scale.js"></script>
 	</div>
 </body>
 </html>

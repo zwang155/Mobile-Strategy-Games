@@ -1,21 +1,21 @@
 function main() {
     let genres = ['Puzzle', 'Action', 'Adventure', 'Family', 'Board']
     let svg = d3.select('#line-year-size-genre'),
-        margin = {top: 60, bottom: 60, left: 80, right: 200},
+        margin = {top: 60, bottom: 60, left: 80, right: 160},
         width = svg.attr('width') - margin.left - margin.right,
         height = svg.attr('height') - margin.top - margin.bottom,
         g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
 
     let parseTime = d3.timeParse('%d/%m/%Y')
 
-    let x = d3.scaleLinear().range([0, width]),
+    let x = d3.scaleTime().range([0, width]),
         y = d3.scaleLinear().range([height, 0]),
         z = d3.scaleOrdinal(d3.schemeCategory10)
 
     const makeLine = (xScale) => d3.line()
         .curve(d3.curveBasis)
         .x(function (d) {
-            return xScale(d.year)
+            return xScale(d.time)
         })
         .y(function (d) {
             return y(d.average)
@@ -24,7 +24,7 @@ function main() {
     let line = d3.line()
         .curve(d3.curveBasis)
         .x(function (d) {
-            return x(d.year)
+            return x(d.time)
         })
         .y(function (d) {
             return y(d.average)
@@ -33,7 +33,7 @@ function main() {
     d3.csv('appstore_games.csv', function (d) {
         return {
             year: parseTime(d['Original Release Date']).getFullYear(),
-            size: +d['Size'],
+            sizeLog: Math.log10(+d['Size']),
             genre: d['Genres']
         }
     }).then(function (dataset) {
@@ -48,32 +48,40 @@ function main() {
         })
         data.forEach(function (elem) {
             for (let i = start; i <= end; i++) {
-                elem.values.push({year: i, count: 0, total: 0, average: 0})
+                elem.values.push({
+                    time: Date.UTC(i, 0),
+                    year: i,
+                    count: 0,
+                    total: 0,
+                    average: 0})
             }
         })
 
         dataset.forEach(elem => {
-            if (elem.year >= start && elem.year <= end) {
+            if (elem.year >= start && elem.year <= end && elem.sizeLog > 0) {
                 genres.forEach(g => {
                     if (elem.genre.includes(g)) {
-                        let entry = data.find(a => a.id === g).values.find(v => v.year === elem.year)
+                        let entry = data.find(a => a.id === g).values
+                            .find(v => v.year === elem.year)
                         entry.count++
-                        entry.total += elem.size
+                        entry.total += elem.sizeLog
                     }
                 })
             }
         })
         data.forEach(function (elem) {
-            elem.values.forEach(d => d.average = d.count > 0 ? d.total / d.count : 0)
+            elem.values = elem.values.filter(d => d.count !== 0)
+            elem.values.forEach(d => d.average = Math.pow(10, d.total / d.count))
         })
         data.sort((a, b) =>
             b.values.find(d => d.year === end).average - a.values.find(d => d.year === end).average)
         console.log(data)
 
-        x.domain([start, end])
+        x.domain([Date.UTC(start, 0) , Date.UTC(end, 1)])
         y.domain([
-            d3.min(data, d => d3.min(d.values, v => v.average)),
-            d3.max(data, d => d3.max(d.values, v => v.average))
+            10000000, 150000000
+            // d3.min(data, d => d3.min(d.values, v => v.average)),
+            // d3.max(data, d => d3.max(d.values, v => v.average))
         ])
 
         z.domain(data.map(function (c) {
@@ -88,53 +96,25 @@ function main() {
 
         g.append('g')
             .attr('class', 'axis axis--y')
-            .call(d3.axisLeft(y).tickFormat(d3.format('.2s')))
+            .call(d3.axisLeft(y).ticks(3).tickFormat(d3.format('.2s')))
             .append('text')
+            .attr('text-anchor', 'middle')
             .attr('transform', 'rotate(-90)')
-            .attr('y', 6)
-            .attr('dy', '0.71em')
+            .attr('x', - height / 2)
+            .attr('y', - margin.left * 2 / 3)
             .attr('fill', '#000')
-            .text('Size')
+            .text('Size (geometrical average)')
 
         let city = g.selectAll('.city')
             .data(data)
             .enter().append('svg')
             .attr('class', 'city')
+            .attr('id', d => 'city-' + d.id)
             .attr('width', width)
-
-
-        function hover(elem) {
-            let attrs = elem.srcElement.attributes
-            let id = attrs['data-id'].value
-            let path = city.select('#' + id)
-            if (path.attr('visibility') === 'hidden') {
-                return
-            }
-            city.selectAll('.line').style('stroke', 'lightgrey')
-            path.style('stroke', z(elem.srcElement.id))
-        }
-
-        function exit(elem) {
-            city.selectAll('.line').style('stroke', d => {
-                return z(d.id)
-            })
-        }
-
-        function click(elem) {
-            let attrs = elem.srcElement.attributes
-            let id = attrs['data-id'].value
-            let path = city.select('#' + id)
-            if (path.attr('visibility') === 'hidden') {
-                path.attr('visibility', 'visible')
-            } else {
-                exit(elem)
-                path.attr('visibility', 'hidden')
-            }
-        }
 
         const xAxis = (g, x) => g
             .attr('transform', `translate(0,${height})`)
-            .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0).tickFormat(d3.format('d')))
+            .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
 
         function zoomed(event) {
             let xz = event.transform.rescaleX(x)
@@ -145,7 +125,7 @@ function main() {
         }
 
         const zoom = d3.zoom()
-            .scaleExtent([1, 5])
+            .scaleExtent([1, 2])
             .extent([[margin.left, 0], [width, height]])
             .translateExtent([[margin.left, -Infinity], [width, Infinity]])
             .on('zoom', zoomed)
@@ -161,37 +141,11 @@ function main() {
             .attr('d', function (d) {
                 return line(d.values)
             })
-            .attr('id', d => d.id.substring(0, 3).toUpperCase())
-            .attr('data-id', d => d.id.substring(0, 3).toUpperCase())
+            .attr('id', d => d.id)
             .attr('visibility', 'visible')
             .style('stroke', function (d) {
                 return z(d.id)
             })
-            .on('mouseout', exit)
-
-        // svg.selectAll('.label')
-        //     .data(data)
-        //     .enter()
-        //     .append('text')
-        //     .datum(function (d) {
-        //         return {id: d.id, value: d.values[d.values.length - 1]}
-        //     })
-        //     .attr('class', 'label')
-        //     .attr('transform', function (d) {
-        //         return 'translate(' + x(d.value.year) + ',' + y(d.value.average) + ')'
-        //     })
-        //     .attr('x', 55)
-        //     .attr('y', 15)
-        //     .attr('dy', '0.35em')
-        //     .attr('id', d => d.id)
-        //     .attr('data-id', d => d.id.substring(0, 3).toUpperCase())
-        //     .style('font', '10px sans-serif')
-        //     .text(function (d) {
-        //         return d.id
-        //     })
-        //     .on('click', click)
-        //     .on('mouseover', hover)
-        //     .on('mouseout', exit)
 
         let legend = d3.legendColor()
             .title('Color Legend')
@@ -201,6 +155,36 @@ function main() {
             .attr('class', 'legend')
             .attr('transform', 'translate(' + (width + margin.left + margin.right/5) + ',' + ((height - margin.bottom) / 2) + ')')
             .call(legend)
+
+        svg.selectAll('g.cell')
+            .on('mouseover', hover)
+            .on('mouseout', exit)
+            .on('click', click)
+
+        function hover(event, d) {
+            let path = city.select('#' + d)
+            if (path.attr('visibility') === 'hidden') {
+                return
+            }
+            city.selectAll('.line').style('stroke', 'lightgrey')
+            path.style('stroke', z(d))
+            svg.select('#city-' + d).raise()
+        }
+
+        function exit() {
+            city.selectAll('.line').style('stroke', d => z(d.id))
+        }
+
+        function click(event, d) {
+            let path = city.select('#' + d)
+            if (path.attr('visibility') === 'hidden') {
+                path.attr('visibility', 'visible')
+            } else {
+                exit()
+                path.attr('visibility', 'hidden')
+            }
+        }
+
     })
 }
 
