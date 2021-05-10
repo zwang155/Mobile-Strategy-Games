@@ -18,7 +18,7 @@ function main() {
             d3.schemeTableau10[2]
         ]).domain([0, 1, 2, 3])
 
-    d3.csv('appstore_games.csv', d => {
+    d3.csv('small_appstore_games.csv', d => {
         return {
             name: d['Name'],
             rating: +d['Average User Rating'],
@@ -36,12 +36,41 @@ function main() {
                     count: elem.count,
                     free: elem.free,
                     iap: elem.iap,
-                    category: (elem.free ? 0 : 2) + (elem.iap ? 1 : 0)})
+                    category: (elem.free ? 0 : 2) + (elem.iap ? 1 : 0),
+                    rand: Math.random()
+                })
+
             }
         })
         console.log(data)
 
         yScale.domain([d3.min(data, d => d.count), d3.max(data, d => d.count)])
+
+        let temp = data.find(d => d.name === 'Clash of Clans')
+        const annotations = [
+            {
+                note: {
+                    label: 'Avg Rating: 4.5\nRating Count: 3.03M',
+                    title: 'Clash of Clans',
+                },
+                x: xScale(temp.rating) + xScale.bandwidth() * (temp.category + temp.rand) / 4,
+                y: yScale(temp.count),
+                dy: 0,
+                dx: -240,
+                subject: {
+                    radius: 10,
+                },
+                color: 'steelblue'
+            }]
+
+        const makeAnnotations = d3.annotation()
+            .notePadding(10)
+            .type(d3.annotationCalloutCircle)
+            .annotations(annotations)
+
+        svg.append('g')
+            .attr('class', 'annotation-group')
+            .call(makeAnnotations)
 
         function hover(event, d) {
             d3.select(this).transition().duration(300).style('stroke', 'black')
@@ -66,7 +95,7 @@ function main() {
             .enter()
             .append('circle')
             .attr('class', d => 'c' + d.category)
-            .attr('cx', d => xScale(d.rating) + xScale.bandwidth() * (d.category + Math.random()) / 4)
+            .attr('cx', d => xScale(d.rating) + xScale.bandwidth() * (d.category + d.rand) / 4)
             .attr('cy', d => yScale(d.count))
             .attr('r', 2.2)
             .attr('fill', d => zScale(d.category))
@@ -93,11 +122,14 @@ function main() {
             .attr('transform', 'rotate(-90)')
             .attr('x', - height / 2 - margin.top)
             .attr('y', - margin.left / 2)
-            .text('User Rating Count')
+            .text('User Rating Count (log scale)')
 
         let legend = d3.legendColor()
-            .title('Color Legend')
+            .title('Color Legend (IAP: In-App Purchase)')
+            .titleWidth(80)
             .labels(['Totally Free', 'Free but IAP', 'IAPFree but Paid', 'Paid & IAP'])
+            .shapeWidth(12)
+            .shapeHeight(12)
             .scale(zScale)
 
         svg.append('g')

@@ -30,7 +30,7 @@ function main() {
             return y(d.average)
         })
 
-    d3.csv('appstore_games.csv', function (d) {
+    d3.csv('small_appstore_games.csv', function (d) {
         return {
             year: parseTime(d['Original Release Date']).getFullYear(),
             sizeLog: Math.log10(+d['Size']),

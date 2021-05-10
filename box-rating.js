@@ -17,12 +17,9 @@ function main() {
         .attr('class', 'tooltip')
         .style('opacity', 0)
 
-    let xScale = d3.scaleBand().range([margin.left, margin.left + width])
-            .domain(xLabels).padding(0.5),
-        yLogScale = d3.scaleLog().range([height + margin.top, margin.top]),
-        yLinearScale = d3.scaleLinear().range([height + margin.top, margin.top])
+    let xScale = d3.scaleBand().range([margin.left, margin.left + width]).domain(xLabels).padding(0.5)
 
-    d3.csv('appstore_games.csv', d => {
+    d3.csv('small_appstore_games.csv', d => {
         return {
             rating: +d['Average User Rating'],
             count: +d['User Rating Count'],
@@ -31,14 +28,18 @@ function main() {
             nameLen: d['Name'].length
         }
     }).then(dataset => {
-        drawBoxPlot(dataset, svgs[0], e => e.count, 'Rating Count',
-            yLogScale.domain([5, 2500]), true, d3.schemeTableau10[0])
+        drawBoxPlot(dataset, svgs[0], e => e.count, 'Rating Count (log scale)',
+            d3.scaleLog().range([height + margin.top, margin.top]).domain([5, 2500]).nice(),
+            true, d3.schemeTableau10[0])
         drawBoxPlot(dataset, svgs[1], e => e.price, 'Price',
-            yLinearScale.domain([0, 140]), false, d3.schemeTableau10[2])
-        drawBoxPlot(dataset, svgs[2], e => e.size, 'Size',
-            yLogScale.domain([200000, 500000000]), true, d3.schemeTableau10[4])
+            d3.scaleLinear().range([height + margin.top, margin.top]).domain([0, 150]),
+            false, d3.schemeTableau10[2])
+        drawBoxPlot(dataset, svgs[2], e => e.size, 'Size (log scale)',
+            d3.scaleLog().range([height + margin.top, margin.top]).domain([100000, 1000000000]).nice(),
+            true, d3.schemeTableau10[4])
         drawBoxPlot(dataset, svgs[3], e => e.nameLen, 'Name Length',
-            yLinearScale.domain([0, 80]), true, d3.schemeTableau10[5])
+            d3.scaleLinear().range([height + margin.top, margin.top]).domain([0, 100]),
+            true, d3.schemeTableau10[5])
     })
 
     function drawBoxPlot(dataset, svg, getValue, name, yScale, filter, color) {
@@ -152,7 +153,7 @@ function main() {
         svg.append('g')
             .attr('class', 'axis')
             .attr('transform', 'translate(' + margin.left + ', 0)')
-            .call(d3.axisLeft(yScale).ticks(2).tickFormat(d3.format('.1s')))
+            .call(d3.axisLeft(yScale).ticks(3).tickFormat(d3.format('.2s')))
             .append('text')
             .attr('text-anchor', 'middle')
             .attr('transform', 'rotate(-90)')

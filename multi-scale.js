@@ -9,11 +9,15 @@ function main() {
         .style('opacity', 0)
 
     let names = [
-        'Clash of Clans', 'Clash Royale', 'PUBG MOBILE', 'Plague Inc.',
-        'Sudoku (Free)', 'Traffic Rush'
+        'Clash of Clans',
+        'Clash Royale',
+        'PUBG MOBILE',
+        'Plague Inc.',
+        'Sudoku (Free)',
+        'Traffic Rush'
     ]
 
-    d3.csv('appstore_games.csv', d => {
+    d3.csv('small_appstore_games.csv', d => {
         return {
             name: d['Name'],
             rating: +d['Average User Rating'],
@@ -42,10 +46,10 @@ function main() {
                 d3.schemeTableau10[2]
             ]).domain([0, 1, 2, 3]),
             ageStroke = d3.scaleOrdinal([
-                d3.schemeDark2[0],
-                d3.schemeDark2[4],
-                d3.schemeDark2[5],
-                d3.schemeDark2[6]
+                d3.interpolateGreys(0.15 + 0.85 / 17 * 4),
+                d3.interpolateGreys(0.15 + 0.85 / 17 * 9),
+                d3.interpolateGreys(0.15 + 0.85 / 17 * 12),
+                d3.interpolateGreys(0.15 + 0.85 / 17 * 17),
             ]).domain(['4+', '9+', '12+', '17+']),
             sizeX = d3.scaleLog().range([margin.left, margin.left + width])
                 .domain([1e6, d3.max(data, d => d.size) * 1.5])

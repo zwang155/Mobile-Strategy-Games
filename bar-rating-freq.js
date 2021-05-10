@@ -13,7 +13,7 @@ function main() {
         yScale = d3.scaleLinear().range([height + margin.top, margin.top]).domain([0, 3000]),
         colorScale = d3.scaleSequential().interpolator(d3.interpolateYlGn).domain([0, 5])
 
-    d3.csv('appstore_games.csv', d => {
+    d3.csv('small_appstore_games.csv', d => {
         return {
             rating: +d['Average User Rating']
         }
@@ -100,6 +100,47 @@ function main() {
             .attr('class', 'legend')
             .attr('transform', 'translate(' + (width + margin.left + margin.right/5) + ',' + ((height - margin.bottom) / 2) + ')')
             .call(legend)
+
+        const annotations = [
+            {
+                note: {
+                    label: 'Frequency: 14\nProportion: 0.19%',
+                    title: 'Avg Rating 1.0',
+                },
+                x: xScale(1) + xScale.bandwidth(),
+                y: yScale(data[1]),
+                dy: -120,
+                dx: 30,
+                subject: {
+                    x1: margin.left,
+                    x2: margin.left + width
+                },
+                color: 'steelblue'
+            },
+            {
+                note: {
+                    label: 'Frequency: 2861\nProportion: 37.84%',
+                    title: 'Avg Rating 4.5',
+                },
+                x: xScale(4.5),
+                y: yScale(data[4.5]),
+                dy: 30,
+                dx: -120,
+                subject: {
+                    x1: margin.left,
+                    x2: margin.left + width
+                },
+                color: 'steelblue'
+            }]
+
+        const makeAnnotations = d3.annotation()
+            .notePadding(10)
+            .type(d3.annotationXYThreshold)
+            .annotations(annotations)
+
+        svg.append('g')
+            .attr('class', 'annotation-group')
+            .call(makeAnnotations)
     })
 }
 
